@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import networkx as nx
+import random as rand
 
 #Import real datasets
 Dtrue = np.genfromtxt('COVID19-US.csv', delimiter=',')
 Etrue =  np.genfromtxt('COVID19-US_Deaths.csv', delimiter=',')
 Htrue = np.genfromtxt('COVID19-US_Recovered.csv', delimiter=',')
+time = len(Dtrue)
 
 class GrowingList(list):
     def __setitem__(self, index, value):
@@ -13,20 +16,21 @@ class GrowingList(list):
         list.__setitem__(self, index, value)
 
 class SIDHE:
-    time = len(Dtrue)
     N = 330508267
     seed = 1
     Delta = 0.00001
 
-    def __init__(self, alpha, beta, gamma, delta, zeta, omega):
+    def __init__(self, alpha, beta, gamma, delta, zeta, omega, time):
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
         self.delta = delta
         self.zeta = zeta
         self.omega = omega
+        self.time = time
+    
+    def fullsimulation(self, change=0):
 
-    def simulation(self, change=0):
         S = np.array(np.zeros(self.time), dtype = np.float64)
         I = np.array(np.zeros(self.time), dtype = np.float64)
         D = np.array(np.zeros(self.time), dtype = np.float64)
@@ -43,7 +47,27 @@ class SIDHE:
         elif change == 'z': self.zeta += self.Delta
         elif change == 'o': self.omega += self.Delta
 
-        for i in range(time-1):
+        Population = nx.to_numpy_array(nx.fast_gnp_random_graph(self.N, rand.uniform(0,1)))
+
+
+    def simplesimulation(self, change=0):
+        S = np.array(np.zeros(self.time), dtype = np.float64)
+        I = np.array(np.zeros(self.time), dtype = np.float64)
+        D = np.array(np.zeros(self.time), dtype = np.float64)
+        H = np.array(np.zeros(self.time), dtype = np.float64)
+        E = np.array(np.zeros(self.time), dtype = np.float64)
+        
+        S[0] = self.N - self.seed
+        I[0] = SIDHE.seed
+
+        if change == 'a': self.alpha += self.Delta
+        elif change == 'b': self.beta += self.Delta
+        elif change == 'g': self.gamma += self.Delta
+        elif change == 'd': self.delta += self.Delta
+        elif change == 'z': self.zeta += self.Delta
+        elif change == 'o': self.omega += self.Delta
+
+        for i in range(self.time-1):
             S[i+1] = S[i] - S[i]*((self.beta/self.N)*I[i] + (self.alpha/self.N)*D[i])
             I[i+1] = I[i] + S[i]*((self.beta/self.N)*I[i] + (self.alpha/self.N)*D[i]) - self.gamma*I[i] - self.delta*I[i]
             D[i+1] = D[i] + self.gamma*I[i] - self.zeta*D[i] - self.omega*I[i]
@@ -56,11 +80,11 @@ class SIDHE:
         return np.sum(np.abs(TrueVal - ApproximateVal)/self.time)
 
     def derivative(self, TrueDataset, OriginalDataset, DeltaDataset):
-        return((model.error(TrueDataset, DeltaDataset) - model.error(TrueDataset, OriginalDataset))/self.Delta)
+        return((self.error(TrueDataset, DeltaDataset) - self.error(TrueDataset, OriginalDataset))/self.Delta)
 
 
 #Initial parameter guess
-model = SIDHE(0.055, 0.05, 0.04, 0.00001, 0.00001, 0.00001)
+model = SIDHE(0.055, 0.05, 0.04, 0.00001, 0.00001, 0.00001, time)
 
 ModelError = GrowingList()
 t = 1
@@ -68,24 +92,24 @@ time = len(Dtrue)
 StopIterator = True
 
 #Initial Error
-S,I,D,H,E = model.simulation()
+S,I,D,H,E = model.simplesimulation()
 ModelError[0] = model.error(Dtrue, D) + model.error(Htrue, H) + model.error(Etrue, E) 
 ModelError[1] = 0
 
 while StopIterator == True:
 
     #Tests error of each iteration
-    S,I,D,H,E = model.simulation()
+    S,I,D,H,E = model.simplesimulation()
     ModelError[t] = model.error(Dtrue, D) + model.error(Htrue, H) + model.error(Etrue, E)
 
     #Changes parameters by small amount
     Delta = 0.00001
-    Sdummy, Idummy, Da, Ha, Ea = model.simulation('a')
-    Sdummy, Idummy, Db, Hb, Eb = model.simulation('b')
-    Sdummy, Idummy, Dg, Hg, Eg = model.simulation('g')
-    Sdummy, Idummy, Dd, Hd, Ed = model.simulation('d')
-    Sdummy, Idummy, Dz, Hz, Ez = model.simulation('z')
-    Sdummy, Idummy, Do, Ho, Eo = model.simulation('o')
+    Sdummy, Idummy, Da, Ha, Ea = model.simplesimulation('a')
+    Sdummy, Idummy, Db, Hb, Eb = model.simplesimulation('b')
+    Sdummy, Idummy, Dg, Hg, Eg = model.simplesimulation('g')
+    Sdummy, Idummy, Dd, Hd, Ed = model.simplesimulation('d')
+    Sdummy, Idummy, Dz, Hz, Ez = model.simplesimulation('z')
+    Sdummy, Idummy, Do, Ho, Eo = model.simplesimulation('o')
 
     #Finds derivative of the error function
     DerModelA = model.derivative(Dtrue, D, Da) + model.derivative(Htrue, H, Ha) + model.derivative(Etrue, E, Ea) 
@@ -113,8 +137,9 @@ while StopIterator == True:
     t+=1
 
 ModelError = np.array(ModelError)
-    
-S,I,D,H,E = model.simulation()
+
+model.time = 1000
+S,I,D,H,E = model.simplesimulation()
 
 print('__________________________________________________________________________________________________')
 print(f'Initial Error: {ModelError[0]:.20f} | Final Error: {ModelError[t-1]}')

@@ -1,0 +1,112 @@
+import numpy as np
+import scipy
+import matplotlib.pyplot as plt
+import networkx as nx
+import random as rand
+import math
+
+#Import real datasets
+Dtrue = np.genfromtxt('COVID19-US.csv', delimiter=',')
+Etrue =  np.genfromtxt('COVID19-US_Deaths.csv', delimiter=',')
+Htrue = np.genfromtxt('COVID19-US_Recovered.csv', delimiter=',')
+time = len(Dtrue)
+
+class GrowingList(list):
+    def __setitem__(self, index, value):
+        if index >= len(self):
+            self.extend([None]*(index + 1 - len(self)))
+        list.__setitem__(self, index, value)
+
+class SIDHE:
+    N = 330508267
+    seed = 1
+    Delta = 0.00001
+
+    def __init__(self, alpha, beta, gamma, delta, zeta, omega, time):
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.delta = delta
+        self.zeta = zeta
+        self.omega = omega
+        self.time = time
+    
+    def fullsimulation(self, change=0):
+
+        # S = np.array(np.zeros(self.time), dtype = np.float64)
+        # I = np.array(np.zeros(self.time), dtype = np.float64)
+        # D = np.array(np.zeros(self.time), dtype = np.float64)
+        # H = np.array(np.zeros(self.time), dtype = np.float64)
+        # E = np.array(np.zeros(self.time), dtype = np.float64)
+        
+        # S[0] = self.N - self.seed
+        # I[0] = SIDHE.seed
+
+        # if change == 'a': self.alpha += self.Delta
+        # elif change == 'b': self.beta += self.Delta
+        # elif change == 'g': self.gamma += self.Delta
+        # elif change == 'd': self.delta += self.Delta
+        # elif change == 'z': self.zeta += self.Delta
+        # elif change == 'o': self.omega += self.Delta
+
+        #Creates nodes w/ random coordinates on 2-D Cartesian plane btwn -1 and 1
+        size = 100
+        xcoord = np.random.uniform(-1.0, 1.0, size)
+        ycoord = np.random.uniform(-1.0, 1.0, size)
+        
+        xcoord[xcoord>1] = -1
+        xcoord[xcoord<-1] = 1
+        ycoord[ycoord>1] = -1
+        ycoord[ycoord<-1] = 1
+
+        #Creates edges based on threshold distances btwn nodes
+        proximity = 0.3
+        AdjacencyMatrix = np.zeros((size, size))
+        Distance = np.zeros((size, size))
+
+        for j in range(1, size):
+            for i in range(1, size):
+                Distance[i,j] = math.sqrt((xcoord[i]-xcoord[j])**2 + (ycoord[i]-ycoord[j])**2)
+                AdjacencyMatrix[i,j] = Distance[i,j] < proximity
+
+        #Generates NetworkX graph and converts AdjacencyMatrix to sparse
+        Population = nx.convert_matrix.from_numpy_array(AdjacencyMatrix)
+        AdjacencyMatrix = scipy.sparse.csr_matrix(AdjacencyMatrix)
+
+        #Initialises indicator vectors
+        S = np.array(np.zeros(size))
+        I = np.array(np.zeros(size))
+        D = np.array(np.zeros(size))
+        H = np.array(np.zeros(size))
+        E = np.array(np.zeros(size))
+
+        while(sum(I) + sum(D) > 0):
+
+            SumS = sum(S)
+            SumI = sum(I)
+            SumD = sum(D)
+            SumH = sum(H)
+            SumE = sum(E)
+
+            print(np.random.rand(size) < np.power(1-(1-self.beta), AdjacencyMatrix.sum(axis=1)))
+
+
+        return AdjacencyMatrix, Population
+    
+    def error(self, TrueVal, ApproximateVal):
+        return np.sum(np.abs(TrueVal - ApproximateVal)/self.time)
+
+    def derivative(self, TrueDataset, OriginalDataset, DeltaDataset):
+        return((self.error(TrueDataset, DeltaDataset) - self.error(TrueDataset, OriginalDataset))/self.Delta)
+
+
+model = SIDHE(0.055, 0.05, 0.04, 0.00001, 0.00001, 0.00001, time)
+Adj, Pop = model.fullsimulation()
+plt.figure()
+plt.spy(Adj)
+
+plt.figure()
+nx.drawing.nx_pylab.draw(Pop, node_size=50)
+plt.axis('off')
+
+plt.show()
