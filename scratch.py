@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import networkx as nx
-import random as rand
+import random
 import math
 
 #Import real datasets
@@ -31,6 +31,8 @@ class SIDHE:
         self.omega = omega
         self.time = time
     
+    def buckettobucket(self, bucket_from, probability, size):
+        return 
     def fullsimulation(self, change=0):
 
         # S = np.array(np.zeros(self.time), dtype = np.float64)
@@ -69,30 +71,58 @@ class SIDHE:
                 Distance[i,j] = math.sqrt((xcoord[i]-xcoord[j])**2 + (ycoord[i]-ycoord[j])**2)
                 AdjacencyMatrix[i,j] = Distance[i,j] < proximity
 
-        #Generates NetworkX graph and converts AdjacencyMatrix to sparse
+        #Generates NetworkX graph
         Population = nx.convert_matrix.from_numpy_array(AdjacencyMatrix)
-        AdjacencyMatrix = scipy.sparse.csr_matrix(AdjacencyMatrix)
 
         #Initialises indicator vectors
-        S = np.array(np.zeros(size))
-        I = np.array(np.zeros(size))
-        D = np.array(np.zeros(size))
-        H = np.array(np.zeros(size))
-        E = np.array(np.zeros(size))
+        
+        I = np.array(np.zeros(size), dtype=bool)
+        for x in random.sample(range(size), self.seed):
+            I[x] = 1
+
+        S = np.array(~I, dtype=bool)
+        D = np.array(np.zeros(size), dtype=bool)
+        H = np.array(np.zeros(size), dtype=bool)
+        E = np.array(np.zeros(size), dtype=bool)
+
+    
+        t=0
+
+        SumS = []
+        SumI = []
+        SumD = []
+        SumH = []
+        SumE = []
 
         while(sum(I) + sum(D) > 0):
 
-            SumS = sum(S)
-            SumI = sum(I)
-            SumD = sum(D)
-            SumH = sum(H)
-            SumE = sum(E)
+            SumS.append(sum(S))
+            SumI.append(sum(I))
+            SumD.append(sum(D))
+            SumH.append(sum(H))
+            SumE.append(sum(E))
 
-            print(np.random.rand(size) < np.power(1-(1-self.beta), AdjacencyMatrix.sum(axis=1)))
+            #S to I
+            InfectedNeighbors = np.dot(AdjacencyMatrix, I.astype(int))
+            InfectedDiagnosed = np.dot(AdjacencyMatrix, D.astype(int))
+            NewI = np.less(np.random.rand(size), np.multiply((1-np.power((1-self.beta), InfectedNeighbors)), 1-np.power((1-self.alpha), InfectedDiagnosed)))
+            NewI = np.logical_and(NewI, S.astype(bool))
 
+            NewD = np.logical_and((np.random.rand(size) < self.gamma), I.astype(bool))
+            DtoH = np.logical_and((np.random.rand(size) < self.zeta), D.astype(bool))
+            ItoH = np.logical_and(np.logical_and((np.random.rand(size) < self.delta), I.astype(bool)), ~NewD)
+            NewE = np.logical_and(np.logical_and((np.random.rand(size) < self.omega), D.astype(bool)), ~DtoH)
 
-        return AdjacencyMatrix, Population
-    
+            S = S.astype(int) - NewI.astype(int)
+            I = I.astype(int) + NewI.astype(int) - NewD.astype(int) - ItoH.astype(int)
+            D = D.astype(int) + NewD.astype(int) - DtoH.astype(int)
+            H = H.astype(int) + ItoH.astype(int) + DtoH.astype(int)
+            E = E.astype(int) + NewE.astype(int)
+
+            t += 1
+        
+        return SumS
+
     def error(self, TrueVal, ApproximateVal):
         return np.sum(np.abs(TrueVal - ApproximateVal)/self.time)
 
@@ -100,13 +130,6 @@ class SIDHE:
         return((self.error(TrueDataset, DeltaDataset) - self.error(TrueDataset, OriginalDataset))/self.Delta)
 
 
-model = SIDHE(0.055, 0.05, 0.04, 0.00001, 0.00001, 0.00001, time)
-Adj, Pop = model.fullsimulation()
-plt.figure()
-plt.spy(Adj)
+model = SIDHE(0.055, 0.005, 0.04, 0.00001, 0.00001, 0.00001, time)
 
-plt.figure()
-nx.drawing.nx_pylab.draw(Pop, node_size=50)
-plt.axis('off')
-
-plt.show()
+print(model.fullsimulation())
