@@ -3,6 +3,12 @@
 A system to model COVID-19 using a compartmental model of epidemiology.
 Contains 2 implementations, a network based model and a mathematical function based model.
 
+Instructions for use:
+
+Run learning.py to generate parameters based on COVID19-US data
+
+To update datasets: CSV format, chronologically ordered. Needs Diagnoses, Recoveries, and Deaths data
+
 v1.0 Changelog
 
 * SIDHE.py
