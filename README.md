@@ -12,3 +12,6 @@ v1.0 Changelog
 * learning.py 
   * Learns w/ fullsimulation() model
   * Outputs final parameters to parameters.txt in format: a,b,g,d,z,o
+  
+* COVID Datasets
+  * Updated to 2020-11-03 from JHU database
