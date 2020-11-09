@@ -21,36 +21,19 @@ class SIDHE:
         self.time = time
     
     def fullsimulation(self, change=0):
-        #Creates nodes w/ random coordinates on 2-D Cartesian plane btwn -1 and 1
-        # size = 1000
-        # xcoord = np.random.uniform(-1.0, 1.0, size)
-        # ycoord = np.random.uniform(-1.0, 1.0, size)
-        
-        # xcoord[xcoord>1] = -1
-        # xcoord[xcoord<-1] = 1
-        # ycoord[ycoord>1] = -1
-        # ycoord[ycoord<-1] = 1
-
-        # #Creates edges based on threshold distances btwn nodes
-        # proximity = 0.1
-        # AdjacencyMatrix = np.zeros((size, size))
-        # Distance = np.zeros((size, size))
-
-        # for j in range(1, size):
-        #     for i in range(1, size):
-        #         Distance[i,j] = math.sqrt((xcoord[i]-xcoord[j])**2 + (ycoord[i]-ycoord[j])**2)
-        #         AdjacencyMatrix[i,j] = Distance[i,j] < proximity
-
-        # #Generates NetworkX graph
-        # Population = nx.convert_matrix.from_numpy_array(AdjacencyMatrix)
-
         #Checks if values need to be changed
-        if change == 'a': self.alpha += self.Delta
-        elif change == 'b': self.beta += self.Delta
-        elif change == 'g': self.gamma += self.Delta
-        elif change == 'd': self.delta += self.Delta
-        elif change == 'z': self.zeta += self.Delta
-        elif change == 'o': self.omega += self.Delta
+        if change == 'a': 
+            self.alpha += self.Delta
+        elif change == 'b': 
+            self.beta += self.Delta
+        elif change == 'g': 
+            self.gamma += self.Delta
+        elif change == 'd': 
+            self.delta += self.Delta
+        elif change == 'z': 
+            self.zeta += self.Delta
+        elif change == 'o': 
+            self.omega += self.Delta
 
         #Initialises indicator vectors
         I = np.array(np.zeros(self.size), dtype=int)
@@ -83,7 +66,10 @@ class SIDHE:
             #S to I
             InfectedNeighbors = np.dot(self.AdjacencyMatrix, I)
             DiagnosedNeighbors = np.dot(self.AdjacencyMatrix, D)
-            NewI = np.random.rand(self.size) < ((1 - np.power((1-self.beta), InfectedNeighbors)) + (1 - np.power((1-self.alpha), DiagnosedNeighbors)))
+            NewI = np.random.rand(self.size) < (
+                (1 - np.power((1-self.beta), InfectedNeighbors)) + 
+                (1 - np.power((1-self.alpha), DiagnosedNeighbors)))
+
             NewI = np.logical_and(NewI, S.astype(bool))
 
             #I to H or D
@@ -121,19 +107,34 @@ class SIDHE:
         H = np.array(np.zeros(self.time), dtype = np.float64)
         E = np.array(np.zeros(self.time), dtype = np.float64)
         
-        S[0] = self.N - self.seed
-        I[0] = SIDHE.seed
+        S[0] = (self.N - self.seed) / self.N
+        I[0] = self.seed / self.N
 
-        if change == 'a': self.alpha += self.Delta
-        elif change == 'b': self.beta += self.Delta
-        elif change == 'g': self.gamma += self.Delta
-        elif change == 'd': self.delta += self.Delta
-        elif change == 'z': self.zeta += self.Delta
-        elif change == 'o': self.omega += self.Delta
+        if change == 'a': 
+            self.alpha += self.Delta
+        elif change == 'b': 
+            self.beta += self.Delta
+        elif change == 'g': 
+            self.gamma += self.Delta
+        elif change == 'd': 
+            self.delta += self.Delta
+        elif change == 'z': 
+            self.zeta += self.Delta
+        elif change == 'o': 
+            self.omega += self.Delta
 
         for i in range(self.time-1):
-            S[i+1] = S[i] - S[i]*((self.beta/self.N)*I[i] + (self.alpha/self.N)*D[i])
-            I[i+1] = I[i] + S[i]*((self.beta/self.N)*I[i] + (self.alpha/self.N)*D[i]) - self.gamma*I[i] - self.delta*I[i]
+            S[i+1] = (
+                S[i] - 
+                S[i]*((self.beta/self.N)*I[i] + 
+                (self.alpha/self.N)*D[i]))
+
+            I[i+1] = (I[i] + 
+                S[i]*((self.beta/self.N)*I[i] + 
+                (self.alpha/self.N)*D[i]) - 
+                self.gamma*I[i] - 
+                self.delta*I[i])
+
             D[i+1] = D[i] + self.gamma*I[i] - self.zeta*D[i] - self.omega*I[i]
             H[i+1] = H[i] + self.delta*I[i] + self.zeta*D[i]
             E[i+1] = E[i] + self.omega*D[i]

@@ -1,0 +1,1 @@
+print("".join([f'{i}\t-\t\t{2**i:>3}\n' for i in range(1,9)]))
