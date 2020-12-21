@@ -1,1 +1,5 @@
-print("".join([f'{i}\t-\t\t{2**i:>3}\n' for i in range(1,9)]))
+import networkx as nx
+from network2tikz import plot
+
+SimGraph = nx.complete_graph(14)
+plot(SimGraph, 'test.tex')

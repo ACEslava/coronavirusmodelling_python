@@ -1,0 +1,28 @@
+// The Round Table
+digraph {
+	rankdir=LR
+	node [fixedsize=true shape=circle width=1]
+	edge [minlen=2]
+	S [label=Susceptible]
+	I [label=Infected]
+	D [label=Diagnosed]
+	H [label=Healthy]
+	E [label=Expired]
+	S -> I [label="S(βI + αD)"]
+	I -> D [label="γI"]
+	I -> H [label="δI"]
+	D -> H [label="ζD"]
+	D -> E [label="ωD"]
+	subgraph child1 {
+		rank=same
+		I
+		D
+		I -> D [style=invis]
+	}
+	subgraph child2 {
+		rank=same
+		H
+		E
+		H -> E [style=invis]
+	}
+}
