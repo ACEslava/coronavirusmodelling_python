@@ -1,0 +1,17 @@
+\documentclass{standalone}
+\usepackage{tikz-network}
+\begin{document}
+\begin{tikzpicture}
+\clip (0,0) rectangle (6,6);
+\Vertex[x=1.362,y=2.758]{1}
+\Vertex[x=1.648,y=2.725]{2}
+\Vertex[x=0.350,y=2.079]{3}
+\Vertex[x=5.650,y=1.188]{4}
+\Vertex[x=0.772,y=4.812]{5}
+\Edge[](1)(2)
+\Edge[](1)(4)
+\Edge[](1)(5)
+\Edge[](2)(3)
+\Edge[](2)(4)
+\end{tikzpicture}
+\end{document}

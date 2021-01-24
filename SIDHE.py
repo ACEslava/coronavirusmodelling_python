@@ -7,7 +7,7 @@ class SIDHE:
     N = 330508267
     seed = 1
     Delta = 0.00001
-    SimGraph = nx.generators.random_graphs.fast_gnp_random_graph(500, 0.02)
+    SimGraph = nx.generators.random_graphs.fast_gnp_random_graph(500, 0.01)
     AdjacencyMatrix = nx.convert_matrix.to_numpy_array(SimGraph)
     size = nx.classes.function.number_of_nodes(SimGraph)
 
@@ -37,7 +37,7 @@ class SIDHE:
 
         #Initialises indicator vectors
         I = np.array(np.zeros(self.size), dtype=int)
-        random.seed(315)
+        random.seed(327)
         for x in random.sample(range(self.size), self.seed):
             I[x] = 1
 

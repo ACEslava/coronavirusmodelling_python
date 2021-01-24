@@ -5,9 +5,14 @@ from SIDHE import SIDHE
 
 #Import real datasets
 Dtrue = np.genfromtxt('COVID19-US.csv', delimiter=',')
-Etrue =  np.genfromtxt('COVID19-US_Deaths.csv', delimiter=',')
-Htrue = np.genfromtxt('COVID19-US_Recovered.csv', delimiter=',')
-time = len(Dtrue)
+Etrue =  np.genfromtxt('COVID19-US_Deaths.csv', delimiter=',')[:len(Dtrue)]
+Htrue = np.genfromtxt('COVID19-US_Recovered.csv', delimiter=',')[:len(Dtrue)]
+
+time = min(len(Dtrue), len(Etrue), len(Htrue))
+
+Dtrue = np.genfromtxt('COVID19-US.csv', delimiter=',')[:time]
+Etrue =  np.genfromtxt('COVID19-US_Deaths.csv', delimiter=',')[:time]
+Htrue = np.genfromtxt('COVID19-US_Recovered.csv', delimiter=',')[:time]
 
 #Initial parameter guess
 fullmodel = SIDHE(0.003, 0.002, 0.04, 0.0001, 0.002, 0.0001, time)
@@ -53,8 +58,8 @@ while ModelError[t] < ModelError[t-1] or t<20:
             fullmodel.derivative(Etrue, E, ChangeE[i]))
     
     #Gradient Descent
-    h = 1E-20
-    weight = 0.999999
+    h = 1E-15
+    weight = 0.95
     momentum.append([weight*j + DerModel[i] for (i,j) in enumerate(momentum[t-1])])
 
     fullmodel.alpha -= h*momentum[t][0]
